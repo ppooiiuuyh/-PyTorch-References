@@ -1,0 +1,39 @@
+modify faster-rcnn.pytorch\lib\model\rpn\anchor_target_layer.py +156, from
+
+num_examples = torch.sum(labels[i] >= 0)
+
+to
+
+num_examples = torch.sum(labels[i] >= 0).item()
+
+
+#TypeError: index(): argument 'indices' (position 1) must be tuple of Tensors, not Tensor
+
+another issue can be resoved with modify faster-rcnn.pytorch\lib\model\rpn\proposal_target_layer_cascade.py +133, from
+
+labels = gt_boxes[:,:,4].contiguous().view(-1).index(offset.view(-1))\ .view(batch_size, -1)
+
+to
+
+labels = gt_boxes[:,:,4].contiguous().view(-1).index((offset.view(-1), ))\ .view(batch_size, -1)
+
+
+
+#norm constant -> cuda
+def clip_gradient(model, clip_norm):
+    """Computes a gradient clipping coefficient based on gradient norm."""
+    totalnorm = 0
+    for p in model.parameters():
+        if p.requires_grad:
+            modulenorm = p.grad.data.norm()
+            totalnorm += modulenorm ** 2
+    totalnorm = np.sqrt(totalnorm)
+
+    norm = (clip_norm / max(totalnorm, clip_norm))
+    norm = torch.tensor([norm], device='cuda')
+    for p in model.parameters():
+        if p.requires_grad:
+            p.grad.mul_(norm)
+
+
+url :https://github.com/jwyang/faster-rcnn.pytorch/issues/147
